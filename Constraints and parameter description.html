@@ -1,0 +1,403 @@
+Restriction and parameter description
+Constraint description
+Before performing model conversion, please be sure to check the following constraints:
+
+Only the model conversion of the original frame types of caffe and tensorflow is supported. When the original frame type is caffe, the input data type is FLOAT; when the original frame type is tensorflow, the input data type is INT32, BOOL, UINT8, FLOAT.
+When the original frame type is caffe, the op name and op type of the model file (.prototxt) and weight file (.caffemodel) must keep the same name (including upper and lower case).
+When the original frame type is Caffe, except for layers with the same top and bottom (such as BatchNorm, Scale, ReLU, etc.), the top names of other layers need to be consistent with their name names.
+When the original framework type is tensorflow, only the FrozenGraphDef format is supported.
+Does not support dynamic shape input, for example: NHWC input is [? ,? ,?, 3] A number of dimensions can be specified arbitrarily. A fixed value needs to be specified when the model is converted.
+The input data supports up to four dimensions, and transdimensional operators (reshape, expanddim, etc.) cannot output five dimensions.
+In addition to the const operator, the input and output of all layer operators in the model must satisfy dim! = 0.
+Model conversion does not support models with training operators.
+The quantized (uint8) model does not support model conversion.
+The operators in the model only support 2D convolution, not 3D convolution for the time being.
+Parameter Description
+parameter name
+
+Parameter Description
+
+Whether it is required (subject to mode 0 and 3)
+
+Defaults
+
+--mode
+
+Operating mode
+
+0: Generate an offline model adapted to the Ascension AI processor
+1: Offline model or model file to json
+3: Only pre-check to check whether the content of the model file is legal.
+no
+
+0
+
+--model
+
+The original model file path.
+
+Description:
+Path part: Support upper and lower case letters, numbers, underscore; File name part: Support upper and lower case letters, numbers, underscore and dot (.)
+
+Yes
+
+not involving
+
+--weight
+
+Weight file path.
+
+It needs to be specified when the original model is caffe.
+
+Description:
+Path part: Support upper and lower case letters, numbers, underscore; File name part: Support upper and lower case letters, numbers, underscore and dot (.)
+
+no
+
+not involving
+
+--framework
+
+Original frame type
+
+0: caffe
+3: tensorflow
+Description:
+When mode is 1, this parameter is optional, you can specify caffe or tensorflow, if not specified, the default is offline model to json, if you specify, you need to ensure that the --om model and --framework types correspond to each other, for example:
+--framework = 0 --om = / home / username / test /resnet18.prototxt
+
+When mode is 0 or 3, this parameter is required, you can specify caffe or tensorflow.
+Yes
+
+not involving
+
+--output
+
+The path (including the file name) of the converted offline model , such as "out / caffe_resnet18" .
+
+The converted offline model will automatically end with ".om" suffix.
+
+Description:
+Path part: Support upper and lower case letters, numbers, underscore; File name part: Support upper and lower case letters, numbers, underscore and dot (.)
+
+Yes
+
+not involving
+
+--encrypt_mode
+
+Encryption mode
+
+0: encryption
+-1: No encryption
+no
+
+-1
+
+--encrypt_key
+
+The path where the random number file used for encryption is located.
+
+Required in encryption mode.
+
+Description:
+Path part: Support upper and lower case letters, numbers, underline; File name part: Support upper and lower case letters, numbers, underline and dot (.)
+When testing, you can use the openssl rand 32 -out ek_key command to generate a random number file. In actual commercial use, users can choose other tools to generate random number files according to actual needs.
+no
+
+not involving
+
+--hardware_key
+
+The path of the ISV hardware key file (this file is encrypted) used for encryption.
+
+Required in encryption mode.
+
+Description:
+Path part: Support upper and lower case letters, numbers, underscore; File name part: Support upper and lower case letters, numbers, underscore and dot (.)
+
+no
+
+not involving
+
+--certificate
+
+The path of the ISV certificate file used for encryption.
+
+Required in encryption mode.
+
+Description:
+Path part: Support upper and lower case letters, numbers, underscore; File name part: Support upper and lower case letters, numbers, underscore and dot (.)
+
+no
+
+not involving
+
+--private_key
+
+The path of the ISV private key file used for encryption.
+
+Required in encryption mode.
+
+Description:
+Path part: Support upper and lower case letters, numbers, underscore; File name part: Support upper and lower case letters, numbers, underscore and dot (.)
+
+no
+
+not involving
+
+--cal_conf
+
+Quantize the configuration file path.
+
+Description:
+Path part: Support upper and lower case letters, numbers, underscore; File name part: Support upper and lower case letters, numbers, underscore and dot (.)
+Examples of the contents of the quantization configuration file are as follows:
+device: USE_CPU
+
+bin: 150
+
+type: JSD
+
+quantize_algo: NON_OFFSET
+
+inference_with_data_quantized: true
+
+inference_with_weight_quantized: true
+
+For configuration instructions of the quantization configuration file, please refer to the quantization configuration .
+no
+
+not involving
+
+--check_report
+
+File path for saving pre-check results. If the path is not specified, when the model conversion fails or mode is 3 (only pre-check), the pre-check result will be saved in the current path.
+
+Description:
+Path part: Support upper and lower case letters, numbers, underscore; File name part: Support upper and lower case letters, numbers, underscore and dot (.)
+
+no
+
+check_result.json
+
+--h or --help
+
+Display help information.
+
+no
+
+not involving
+
+--input_format
+
+Input data format: NCHW and NHWC
+
+When the original framework is tensorflow, the default is NHWC. If it is actually NCHW, you need to specify NCHW through this parameter.
+When the original framework is Caffe, only the NCHW format is supported.
+no
+
+not involving
+
+--input_fp16_nodes
+
+This parameter is used in conjunction with --is_output_fp16.
+
+When multiple networks are connected in series, specify the input node name of the next network input data type fp16.
+
+For example: "node_name1; node_name2".
+
+For example: two networks net1 and net2 are connected in series, and the output of net1 is used as the input of net2, then the node name of the net1 network to receive net1 output data type fp16 is specified by this parameter.
+
+no
+
+not involving
+
+--input_shape
+
+The shape of the model input data.
+
+For example: "input_name1: n1, c1, h1, w1; input_name2: n2, c2, h2, w2".
+
+input_name must be the node name in the network model before conversion.
+
+If the original model is a dynamic shape, such as input_name1 :? , h, w, c, this parameter is required.
+
+Among them, "?" Is the batch number, which indicates the number of pictures processed at one time, which needs to be filled in by the user according to the actual situation, and is used to convert the original model of the dynamic shape into the offline model of the fixed shape .
+
+no
+
+not involving
+
+--is_output_fp16
+
+When multiple networks are connected in series, specify whether the data type output by the previous network is fp16.
+
+For example: false, true, false, true.
+
+For example: two networks net1 and net2 are connected in series, the output of net1 is used as the input of net2, then the output data type of net1 is specified as fp16 through this parameter.
+
+no
+
+false
+
+--json
+
+Path of converting offline model or model file to json format file.
+
+Description:
+Path part: Support upper and lower case letters, numbers, underscore; File name part: Support upper and lower case letters, numbers, underscore and dot (.)
+
+no
+
+not involving
+
+--om
+
+Required when mode is 1.
+
+The path of the offline model or model file that needs to be converted to json format . For example / home / username /test/out/caffe_resnet18.om or / home / username /test/resnet18.prototxt
+
+Description:
+Path part: Support upper and lower case letters, numbers, underscore; File name part: Support upper and lower case letters, numbers, underscore and dot (.)
+
+no
+
+not involving
+
+--op_name_map
+
+Operator mapping configuration file path, which needs to be specified when the network contains the DetectionOutput operator.
+
+For example, the functions of the DetectionOutput operator in different networks are different, and the mapping of the DetectionOutput (operator in the Davinci model) to the following operator may be specified:
+
+FSRDetectionOutput: Operator in fasterrcnn network
+SSDDetectionOutput: Operator in the SSD network.
+RefinedetDetectionOutput: Operator in RefinedetDetection Network.
+Description:
+Path part: Support upper and lower case letters, numbers, underscore; File name part: Support upper and lower case letters, numbers, underscore and dot (.)
+An example of the contents of the operator mapping configuration file is as follows:
+DetectionOutput: SSDDetectionOutput.
+
+no
+
+not involving
+
+--out_nodes
+
+Specify the output node.
+
+If you do not specify an output node (operator name), the output of the model defaults to the operator information of the last layer. In some cases, the user wants to check whether the parameters of a certain layer of operators are appropriate. Parameter output, you can use this parameter to specify the output of a certain layer of the operator when the model is converted. After the model is converted, you can see the parameter information of the specified output operator at the last layer of the corresponding .om model file. If you cannot view it, you can convert the .om model file to json format and view it.
+
+For example: "node_name1: 0; node_name1: 1; node_name2: 0".
+
+node_name must be the node name in the network model before model conversion. The number after the colon indicates the number of outputs. For example, node_name1: 0 indicates that the node name is the 0th output of node_name1.
+
+no
+
+not involving
+
+--plugin_path
+
+Custom operator plugin path.
+
+For example: "/ home / a1 / b1; / home / a2 / b2; / home / a3 / b3"
+
+Description:
+The path of the custom operator plug-in can contain multiple paths, and the two paths are separated by a semicolon. Each path cannot contain a semicolon, otherwise the parsed path will not be as expected.
+
+no
+
+./plugin
+
+--target
+
+Currently only supports setting to "mini" .
+
+mini: The eltwise operator in quantization supports dual output; the roipooling operator in quantization supports int8 output; the conv operator in quantization supports mixed precision.
+
+no
+
+mini
+
+--ddk_version
+
+Specify the version number of the ddk environment that needs to be matched to run the custom operator.
+
+no
+
+not involving
+
+--net_format
+
+Specify the preferred data format for network operators, ND (N <= 4) and 5D. This parameter takes effect only when the input data of the operator in the network supports both ND and 5D formats.
+
+ND: The operators in the model are converted to a common format according to NCHW.
+5D: The operators in the model are converted into Huawei format according to the 5 dimensions developed by Huawei.
+no
+
+not involving
+
+--insert_op_conf
+
+Enter the configuration file path of the preprocessing operator, for example, the aipp operator.
+
+Description:
+Path part: Support upper and lower case letters, numbers, underscore; File name part: Support upper and lower case letters, numbers, underscore and dot (.)
+An example of the content of the configuration file is as follows:
+aipp_op {
+
+aipp_mode: static
+
+input_format: YUV420SP_U8
+
+csc_switch: true
+
+var_reci_chn_0: 0.00392157
+
+var_reci_chn_1: 0.00392157
+
+var_reci_chn_2: 0.00392157
+
+}
+
+aipp configuration file configuration instructions, please
+View AIPP configuration .
+
+no
+
+not involving
+
+--fp16_high_prec
+
+Specify whether to generate a high-precision FP16 Davinci model.
+
+0: The default value, the common FP16 Davinci model is generated, and the inference performance is better.
+1: Generate high-precision FP16 Davinci model with better inference accuracy.
+High precision currently only supports the following operators Caffe: Convolution, Pooling, FullConnection; TensorFlow: tf.nn.conv2d, tf.nn.max_poo operator.
+
+no
+
+0
+
+--output_type
+
+Network output data type:
+
+FP32: The default value, it is recommended to use the classified network and detection network.
+UINT8: Image super-resolution network, recommended for use, with better inference performance.
+no
+
+FP32
+
+--enable_l2dynamic
+
+L2 dynamic optimization switch, this parameter may affect the inference performance of the network model. If the performance does not meet the requirements, you can try to close the switch to verify the performance impact.
+
+true: Yes, turn on the L2 dynamic optimization switch.
+false: No, turn off the L2 dynamic optimization switch.
+no
+
+true
+
+Parent topic: Converting Caffe / TensorFlow network models
